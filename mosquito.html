@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mosquito</title>
+  <style>
+    body {
+      width: 100%;
+      height: 100vh;
+      /* reset */
+      margin: 0;
+      overflow: hidden;
+      background-color: #000;
+      background-image: url(./images/bg_dark.jpg);
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center center;
+    }
+
+    #game {
+      width: 100%;
+      height: 100%;
+    }
+
+    #btn-start {
+      width: 300px;
+      height: 100px;
+      background: #fff;
+      border-bottom: 12px solid #aaa;
+      border-radius: 20px;
+      position: absolute;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      /* 內文 */
+      text-align: center;
+      font-size: 45px;
+      line-height: 100px;
+      font-family: 微軟正黑體;
+      font-weight: bold;
+      color: #333;
+      text-shadow: 0 0 5px #333;
+      /* filter: drop-shadow(); */
+      cursor: pointer;
+    }
+
+    #btn-start:hover {
+      border-bottom: 5px solid #aaa;
+      box-shadow: 0 0 10px 5px rgb(255, 255, 255, 0.3);
+    }
+
+    #btn-mosquito {
+      height: 30px;
+      position: absolute;
+      right: 5%;
+      bottom: 10%;
+    }
+
+    #info {
+      color: #fff;
+      font-family: 微軟正黑體;
+      font-size: 20px;
+      position: absolute;
+      top: 58%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin-top: 5px;
+    }
+
+    .scoreboard {
+      color: #fff;
+      font-family: 微軟正黑體;
+      font-size: 20px;
+      padding-top: 25px;
+      padding-left: 40px;
+      line-height: 2;
+      display: none;
+      /* 不能被反白選取 */
+      user-select: none;
+      /* 不能被拖曳 */
+      -webkit-user-drag: none;
+    }
+
+    #game>img {
+      height: 20px;
+      position: absolute;
+      cursor: pointer;
+      /* 不能被反白選取 */
+      user-select: none;
+      /* 不能被拖曳 */
+      -webkit-user-drag: none;
+    }
+
+    .dead {
+      bottom: 10%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="btn-start">
+    Turn on &#128161;
+    <img id="btn-mosquito" src="./images/mosquito.png">
+  </div>
+
+  <div id="info">Click to kill the mosquito !</div>
+
+  <div class="scoreboard">
+    <div class="text">Score : <span id="text-score">0</span>/5</div>
+    <div class="text">Time : <span id="text-time">0</span> s</div>
+  </div>
+  <div id="game"></div>
+
+  <!-- 引入 sweetalert -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.all.min.js'
+    integrity='sha512-zB7yJLSASiSevQmWCrQaq+z/f5zRIa884hwWgmK1oI3MfolIzKcpDtyfBsrGqUi/hMCObVwr/+SZTByOqh0zkQ=='
+    crossorigin='anonymous'></script>
+  <!-- 引入 jQ -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js'
+    integrity='sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=='
+    crossorigin='anonymous'></script>
+
+  <script>
+    // // 目前分數
+    let score = 0
+    // // 記秒數
+    let time = 0
+    // // 計時器
+    let timer = 0
+    // // 最高分
+    // const hs = {
+    //   name: '-',
+    //   score: 0
+    // }
+
+    $('#btn-start').hover(
+      function () {
+        // 滑鼠進入時的動畫
+        $('#btn-mosquito').animate({ right: '-300%', bottom: '300%' }, 1000);
+      },
+      function () {
+        // 滑鼠移開時的動畫
+        $('#btn-mosquito').animate({ right: '5%', bottom: '10%' }, 200);
+      }
+    )
+
+    // 點擊開始按鈕 ==========
+    $('#btn-start').click(function () {
+      // 按鈕消失
+      $(this).css('display', 'none')
+      // 指示消失
+      $('#info').css('display', 'none')
+      // 計分板出現
+      $('.scoreboard').css('display', 'block')
+      // 換開燈背景
+      $('body').css('background-image', 'url(./images/bg_light.jpg)')
+
+      // ===== 重設
+      score = 0
+      $('#text-score').text(score)
+      time = 0
+      $('#text-time').text(time)
+
+      const _this = this  // 給 setInterval 裡面用的
+      // ===== 開始後每秒做的事
+      timer = setInterval(function () {
+        console.log($('.mosquito').length + $('.dead').length)
+        // ----- 計時
+        time++
+        $('#text-time').text(time)
+
+        // ----- 隨機產生蚊子
+        const random = Math.ceil(Math.random() * 10)
+        // 如果隨機數字大於 5 且蚊子總數量小於 5
+        if (random > 5 && $('.mosquito').length + $('.dead').length < 5) {
+          // 隨機位置
+          const top = Math.round(Math.random() * 100) + '%'
+          const left = Math.round(Math.random() * 100) + '%'
+          // 產生蚊子
+          const mosquito = $(`<img src="./images/mosquito.png" class="mosquito" style="top: ${top}; left: ${left}">`)
+          $('#game').append(mosquito)
+
+          // 蚊子動起來
+          moveMosquito(mosquito)
+        }
+
+        // ----- 如果得 5 分了
+        if (score === 5) {
+          // 停止計時
+          clearInterval(timer)
+          // 按鈕出現
+          $(_this).css('display', 'block')
+          $('#btn-mosquito').css({ right: '8%', bottom: '10%' })
+          // 指示出現
+          $('#info').css('display', 'block')
+          // 計分板消失
+          $('.scoreboard').css('display', 'none')
+          // 換關燈背景
+          $('body').css('background-image', 'url(./images/bg_dark.jpg)')
+          // 清空遊戲區
+          $('#game').empty()
+
+          // sweetalert
+          Swal.fire({
+            icon: 'success',
+            title: `Killed all <span>&#129439;</span> in ${time} seconds !`,
+            html: `Have a Good Night <span>&#128564;</span>`
+          })
+
+          // sweetalert 造成跑版問題
+          $('.swal2-height-auto').css('height', '100vh')
+          // $('body').css('overflow', 'hidden')
+
+        }
+      }, 1000)
+    })
+
+    // 點到蚊子的事件 ==========
+    $('#game').on('click', '.mosquito', function () {
+      $(this).stop()
+
+      $(this).removeClass('mosquito').addClass('dead')
+
+      // 死掉掉下去
+      $('.dead').animate({ top: '100%' }, 500);
+
+      score++
+      $('#text-score').text(score)
+    })
+
+    // 蚊子動起來
+    function moveMosquito(mosquito) {
+      const top = Math.round(Math.random() * 110) + '%'
+      const left = Math.round(Math.random() * 110) + '%'
+      mosquito.animate({ top, left }, 3000, function () {
+        moveMosquito(mosquito)
+      })
+    }
+
+
+  </script>
+
+</body>
+
+</html>
