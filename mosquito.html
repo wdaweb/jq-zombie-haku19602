@@ -69,10 +69,11 @@
       margin-top: 5px;
     }
 
-    .scoreboard {
+    #scoreboard {
       color: #fff;
       font-family: 微軟正黑體;
       font-size: 20px;
+      font-weight: bold;
       padding-top: 25px;
       padding-left: 40px;
       line-height: 2;
@@ -81,6 +82,10 @@
       user-select: none;
       /* 不能被拖曳 */
       -webkit-user-drag: none;
+    }
+
+    .text {
+      color: bisque;
     }
 
     #game>img {
@@ -107,9 +112,11 @@
 
   <div id="info">Click to kill the mosquito !</div>
 
-  <div class="scoreboard">
-    <div class="text">Score : <span id="text-score">0</span>/5</div>
-    <div class="text">Time : <span id="text-time">0</span> s</div>
+  <div id="scoreboard">
+    <div>Score : <span id="text-score">0</span>/5</div>
+    <div>Time : <span id="text-time">0</span> s</div>
+    <div class="text">The Fastest Player : <span id="text-hsname">-</span></div>
+    <div class="text">The Fastest record : <span id="text-hstime">60</span> s</div>
   </div>
   <div id="game"></div>
 
@@ -130,11 +137,19 @@
     // // 計時器
     let timer = 0
     // // 最高分
-    // const hs = {
-    //   name: '-',
-    //   score: 0
-    // }
+    const hs = {
+      name: '-',
+      time: 60
+    }
+    if (localStorage.hs) {
+      const data = JSON.parse(localStorage.hs)
+      hs.name = data.name
+      hs.time = data.time
+      $('#text-hsname').text(hs.name)
+      $('#text-hstime').text(hs.time)
+    }
 
+    // 開始按鈕的蚊子動畫 ==========
     $('#btn-start').hover(
       function () {
         // 滑鼠進入時的動畫
@@ -153,7 +168,7 @@
       // 指示消失
       $('#info').css('display', 'none')
       // 計分板出現
-      $('.scoreboard').css('display', 'block')
+      $('#scoreboard').css('display', 'block')
       // 換開燈背景
       $('body').css('background-image', 'url(./images/bg_light.jpg)')
 
@@ -166,7 +181,6 @@
       const _this = this  // 給 setInterval 裡面用的
       // ===== 開始後每秒做的事
       timer = setInterval(function () {
-        console.log($('.mosquito').length + $('.dead').length)
         // ----- 計時
         time++
         $('#text-time').text(time)
@@ -196,23 +210,48 @@
           // 指示出現
           $('#info').css('display', 'block')
           // 計分板消失
-          $('.scoreboard').css('display', 'none')
+          $('#scoreboard').css('display', 'none')
           // 換關燈背景
           $('body').css('background-image', 'url(./images/bg_dark.jpg)')
           // 清空遊戲區
           $('#game').empty()
 
-          // sweetalert
-          Swal.fire({
-            icon: 'success',
-            title: `Killed all <span>&#129439;</span> in ${time} seconds !`,
-            html: `Have a Good Night <span>&#128564;</span>`
-          })
+          if (time < hs.time) {
+            Swal.fire({
+              icon: 'success',
+              title: `Killed all <span>&#129439;</span> in ${time} seconds !`,
+              text: `You are the fastest !`,
+              // html: `Have a Good Night <span>&#128564;</span>`,
+              // ===== 輸入欄位
+              input: 'text',
+              // 必填
+              inputAttributes: {
+                required: true
+              },
+              inputPlaceholder: 'Your Name',
+              validationMessage: 'Enter your name',
+              // 不允許點擊外面關閉對話框
+              allowOutsideClick: false,
+              // 不允許按 ESC 關閉對話框
+              allowEscapeKey: false
+            }).then(function (result) {
+              hs.time = time
+              hs.name = result.value
+              $('#text-hsname').text(hs.name)
+              $('#text-hstime').text(hs.time)
+              // 紀錄轉文字存入 localStorage
+              localStorage.hs = JSON.stringify(hs)
+            })
+          } else {
+            Swal.fire({
+              icon: 'success',
+              title: `Killed all <span>&#129439;</span> in ${time} seconds !`,
+              html: `Have a Good Night <span>&#128564;</span>`
+            })
+          }
 
           // sweetalert 造成跑版問題
           $('.swal2-height-auto').css('height', '100vh')
-          // $('body').css('overflow', 'hidden')
-
         }
       }, 1000)
     })
